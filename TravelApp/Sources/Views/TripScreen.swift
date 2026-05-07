@@ -1,12 +1,23 @@
 import SwiftUI
 
 struct TripScreen: View {
-    @State private var viewModel = TripMapViewModel()
+    @State private var viewModel: TripMapViewModel
+
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
 
+    init(trip: Trip, currentUserId: UUID) {
+        _viewModel = State(initialValue: TripMapViewModel(trip: trip, currentUserId: currentUserId))
+    }
+
     var body: some View {
+        layout
+            .task { await viewModel.load() }
+    }
+
+    @ViewBuilder
+    private var layout: some View {
         #if os(iOS)
         if sizeClass == .compact {
             CompactTripLayout(viewModel: viewModel)

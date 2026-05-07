@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum SpotCategory: String, CaseIterable, Identifiable, Hashable, Sendable {
+enum SpotCategory: String, CaseIterable, Identifiable, Hashable, Sendable, Codable {
     case food
     case sight
     case hotel

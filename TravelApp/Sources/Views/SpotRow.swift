@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct SpotRow: View {
-    let spot: MockSpot
+    let spot: Spot
     let isSelected: Bool
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(spot.authorColor.color)
+                    .fill(.tint)
                     .opacity(spot.inItinerary ? 1.0 : 0.55)
                     .frame(width: 32, height: 32)
                 Image(systemName: spot.category.symbolName)

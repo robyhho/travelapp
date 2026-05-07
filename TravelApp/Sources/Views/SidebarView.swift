@@ -7,13 +7,27 @@ struct SidebarView: View {
         VStack(spacing: 0) {
             header
 
-            if let selected = viewModel.selectedSpot {
-                SpotDetailView(spot: selected) {
-                    viewModel.clearSelection()
+            switch viewModel.loadState {
+            case .loading:
+                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .error(let message):
+                ContentUnavailableView {
+                    Label("Couldn't load spots", systemImage: "wifi.exclamationmark")
+                } description: {
+                    Text(message)
+                } actions: {
+                    Button("Retry") { Task { await viewModel.load() } }
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            } else {
-                spotList
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .loaded:
+                if let selected = viewModel.selectedSpot {
+                    SpotDetailView(spot: selected,
+                                   onClose: { viewModel.clearSelection() },
+                                   onDelete: { Task { await viewModel.deleteSpot(selected) } })
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                } else {
+                    spotList
+                }
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.selectedSpotID)
@@ -21,7 +35,7 @@ struct SidebarView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Shanghai trip")
+            Text(viewModel.trip.name)
                 .font(.title2.weight(.semibold))
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
@@ -49,25 +63,26 @@ struct SidebarView: View {
 
     @ViewBuilder
     private var spotList: some View {
-        let spots = viewModel.filteredSpots
-        if spots.isEmpty {
+        let (itinerary, wishlist) = viewModel.partitionedSpots
+        if itinerary.isEmpty && wishlist.isEmpty {
             ContentUnavailableView(
                 viewModel.searchText.isEmpty ? "No spots yet" : "No matches",
                 systemImage: viewModel.searchText.isEmpty ? "mappin.slash" : "magnifyingglass",
                 description: Text(viewModel.searchText.isEmpty
-                                  ? "Pinned spots will show up here."
+                                  ? "Tap on the map to drop your first pin."
                                   : "Try a different search.")
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List(selection: $viewModel.selectedSpotID) {
-                Section("Itinerary") {
-                    ForEach(spots.filter(\.inItinerary)) { spot in
-                        SpotRow(spot: spot, isSelected: viewModel.selectedSpotID == spot.id)
-                            .tag(Optional(spot.id))
+                if !itinerary.isEmpty {
+                    Section("Itinerary") {
+                        ForEach(itinerary) { spot in
+                            SpotRow(spot: spot, isSelected: viewModel.selectedSpotID == spot.id)
+                                .tag(Optional(spot.id))
+                        }
                     }
                 }
-                let wishlist = spots.filter { !$0.inItinerary }
                 if !wishlist.isEmpty {
                     Section("Wishlist") {
                         ForEach(wishlist) { spot in
