@@ -53,6 +53,7 @@ targets:
         UILaunchScreen: {}
         SUPABASE_URL: $(SUPABASE_URL)
         SUPABASE_ANON_KEY: $(SUPABASE_ANON_KEY)
+        NSLocationWhenInUseUsageDescription: "Travel App uses your location to centre the map on where you are."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.robbieho.travelapp
